@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  code  String        @id
+  name  String
+  type  String
+  lines JournalLine[]
+
+  @@map("accounts")
+}
+
+model JournalEntry {
+  id              String        @id @default(uuid()) @db.Uuid
+  entryDate       DateTime      @map("entry_date") @db.Date
+  description     String
+  kind            String
+  reference       String?
+  reversesEntryId String?       @unique @map("reverses_entry_id") @db.Uuid
+  loanId          String?       @map("loan_id") @db.Uuid
+  paymentId       String?       @map("payment_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at")
+  lines           JournalLine[]
+  reverses        JournalEntry? @relation("Reversal", fields: [reversesEntryId], references: [id])
+  reversedBy      JournalEntry? @relation("Reversal")
+
+  @@index([entryDate])
+  @@index([loanId])
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id          String       @id @default(uuid()) @db.Uuid
+  entryId     String       @map("entry_id") @db.Uuid
+  accountCode String       @map("account_code")
+  side        String       @db.Char(1) // C = Credit, D = Debit
+  amount      BigInt
+  loanId      String?      @map("loan_id") @db.Uuid
+  entry       JournalEntry @relation(fields: [entryId], references: [id])
+  account     Account      @relation(fields: [accountCode], references: [code])
+
+  @@index([entryId])
+  @@index([accountCode])
+  @@index([loanId])
+  @@map("journal_lines")
+}
+
+model Loan {
+  id               String       @id @default(uuid()) @db.Uuid
+  principal        BigInt
+  rateNum          BigInt       @map("rate_num")
+  rateDen          BigInt       @map("rate_den")
+  annualRate       String       @map("annual_rate")
+  termMonths       Int          @map("term_months")
+  disbursementDate DateTime     @map("disbursement_date") @db.Date
+  instalmentAmount BigInt       @map("instalment_amount")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  instalments      Instalment[]
+  payments         Payment[]
+
+  @@map("loans")
+}
+
+model Instalment {
+  id                String              @id @default(uuid()) @db.Uuid
+  loanId            String              @map("loan_id") @db.Uuid
+  number            Int
+  dueDate           DateTime            @map("due_date") @db.Date
+  principalDue      BigInt              @map("principal_due")
+  interestDue       BigInt              @map("interest_due")
+  penaltyDue        BigInt              @default(0) @map("penalty_due")
+  feeDue            BigInt              @default(0) @map("fee_due")
+  interestAccruedAt DateTime?           @map("interest_accrued_at")
+  loan              Loan                @relation(fields: [loanId], references: [id])
+  allocations       PaymentAllocation[]
+
+  @@unique([loanId, number])
+  @@map("instalments")
+}
+
+model Payment {
+  id             String              @id @default(uuid()) @db.Uuid
+  loanId         String              @map("loan_id") @db.Uuid
+  seq            Int
+  amount         BigInt
+  paymentDate    DateTime            @map("payment_date") @db.Date
+  status         String              @default("APPLIED")
+  externalRef    String?             @map("external_ref")
+  unapplied      BigInt              @default(0)
+  journalEntryId String?             @map("journal_entry_id") @db.Uuid
+  reversedAt     DateTime?           @map("reversed_at")
+  reverseReason  String?             @map("reverse_reason")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  loan           Loan                @relation(fields: [loanId], references: [id])
+  allocations    PaymentAllocation[]
+
+  @@unique([loanId, seq])
+  @@unique([loanId, externalRef])
+  @@map("payments")
+}
+
+model PaymentAllocation {
+  id           String     @id @default(uuid()) @db.Uuid
+  paymentId    String     @map("payment_id") @db.Uuid
+  instalmentId String     @map("instalment_id") @db.Uuid
+  penalty      BigInt     @default(0)
+  fee          BigInt     @default(0)
+  interest     BigInt     @default(0)
+  principal    BigInt     @default(0)
+  payment      Payment    @relation(fields: [paymentId], references: [id])
+  instalment   Instalment @relation(fields: [instalmentId], references: [id])
+
+  @@unique([paymentId, instalmentId])
+  @@map("payment_allocations")
+}
+
+model AllocationAudit {
+  id               String   @id @default(uuid()) @db.Uuid
+  loanId           String   @map("loan_id") @db.Uuid
+  paymentId        String   @map("payment_id") @db.Uuid
+  triggerPaymentId String   @map("trigger_payment_id") @db.Uuid
+  trigger          String
+  reason           String
+  before           Json
+  after            Json
+  journalEntryId   String?  @map("journal_entry_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([loanId])
+  @@map("allocation_audit")
+}
+
+model IdempotencyKey {
+  key            String   @id
+  requestHash    String   @map("request_hash")
+  responseStatus Int?     @map("response_status")
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("idempotency_keys")
+}
+
+model Period {
+  period   String   @id
+  closedAt DateTime @default(now()) @map("closed_at")
+
+  @@map("periods")
+}
