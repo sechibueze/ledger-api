@@ -1,4 +1,4 @@
-# Production Ledger
+# QuickLend - Production Ledger API
 
 A small lending engine. It handles term loans and invoice quotes on top of a double-entry ledger, and it is built to stay correct when payments arrive twice, in parallel, out of order, or get reversed.
 
