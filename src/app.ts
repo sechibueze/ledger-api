@@ -1,6 +1,11 @@
 import express from "express";
 import { errorHandler } from "./lib/errors";
 import { invoiceRouter } from "./modules/invoices/invoice.route";
+import { ledgerRouter } from "./modules/ledger/ledger.route";
+import { loanRouter } from "./modules/loans/loan.route";
+import { jobRouter } from "./modules/jobs/job.route";
+import { reconciliationRouter } from "./modules/reconciliation/reconciliation.route";
+import { periodRouter } from "./modules/periods/period.route";
 
 export const app = express();
 app.use(express.json());
@@ -8,6 +13,10 @@ app.set("json replacer", (_k: string, v: unknown) =>
   typeof v === "bigint" ? Number(v) : v,
 );
 
+app.use("/ledger", ledgerRouter);
 app.use("/invoices", invoiceRouter);
-
+app.use(`/reconciliation`, reconciliationRouter);
+app.use("/loans", loanRouter);
+app.use("/jobs", jobRouter);
+app.use("/periods", periodRouter);
 app.use(errorHandler);

@@ -1,4 +1,25 @@
 services:
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-ledger}:${DB_PASSWORD:-ledger}@db:5432/${DB_NAME:-ledger}
+      REDIS_URL: redis://redis:6379
+      PORT: 4010
+    ports:
+      - "${APP_PORT:-4010}:4010"
+    command: sh -c "npx prisma migrate deploy && npm start"
+    healthcheck:
+      test:
+        ["CMD", "wget", "-qO-", "http://localhost:4010/ledger/trial-balance"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
   db:
     image: postgres:17-alpine
     environment:
