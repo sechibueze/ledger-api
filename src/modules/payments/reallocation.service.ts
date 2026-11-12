@@ -16,7 +16,7 @@ export interface ReallocateOpts {
   reason: string;
 }
 
-const total = (allocations: Map<string, Comp>): Comp => {
+const getTotalAllocations = (allocations: Map<string, Comp>): Comp => {
   const totals = zeroComp();
   for (const allocation of allocations.values()) {
     for (const component of COMPONENTS)
@@ -172,8 +172,8 @@ export async function reallocate(tx: Tx, loanId: string, opts: ReallocateOpts) {
       continue;
     }
 
-    const nextTotals = total(nextPlan.allocations);
-    const previousTotals = total(previousAllocations);
+    const nextTotals = getTotalAllocations(nextPlan.allocations);
+    const previousTotals = getTotalAllocations(previousAllocations);
 
     const allocationDelta = {
       penalty: nextTotals.penalty - previousTotals.penalty,

@@ -65,6 +65,15 @@ export async function runAccrual(asOfDate: string) {
   let instalmentsAccrued = 0;
   const failures: { loanId: string; error: string }[] = [];
 
+  if (!loansWithPendingAccruals.length) {
+    return {
+      asOfDate,
+      loansProcessed: loansWithPendingAccruals.length - failures.length,
+      instalmentsAccrued,
+      failures,
+    };
+  }
+
   for (const { loan_id: loanId } of loansWithPendingAccruals) {
     try {
       instalmentsAccrued += await db.$transaction(async (tx) => {
@@ -72,6 +81,7 @@ export async function runAccrual(asOfDate: string) {
         return accrueLoanTx(tx, loanId, asOfDate);
       });
     } catch (error) {
+      console.log("accrual error", error);
       failures.push({ loanId, error: (error as Error).message });
     }
 

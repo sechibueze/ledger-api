@@ -9,9 +9,9 @@ import { createPayment } from "./payment.service";
 export const paymentRouter = Router({ mergeParams: true });
 
 paymentRouter.post("/:paymentId/reverse", async (req, res) => {
-  const { id } = req.params as { id: string; paymentId: string };
+  const { id: loan_id } = req.params as { id: string; paymentId: string };
 
-  const loanId = uuid.parse(id);
+  const loanId = uuid.parse(loan_id);
   const paymentId = uuid.parse(req.params.paymentId);
   const body = reversePaymentSchema.parse(req.body ?? {});
   res.status(201).json({ data: await reversePayment(loanId, paymentId, body) });

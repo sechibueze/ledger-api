@@ -21,7 +21,8 @@ describe("ledger API", () => {
 
     expect(trialBalance.balanced).toBe(true);
     expect(
-      trialBalance.accounts.find((account: any) => account.code === "CASH").net,
+      trialBalance.accounts.find((account: any) => account.code === "CASH")
+        .netBalance,
     ).toBe(500);
   });
 
@@ -78,7 +79,8 @@ describe("ledger API", () => {
     const trialBalance = (await api().get("/ledger/trial-balance")).body.data;
 
     expect(
-      trialBalance.accounts.find((account: any) => account.code === "CASH").net,
+      trialBalance.accounts.find((account: any) => account.code === "CASH")
+        .netBalance,
     ).toBe(0);
   });
 
@@ -155,7 +157,7 @@ describe("database-level guards (bypassing the app code)", () => {
   });
 
   it("rejects UPDATE and DELETE on entries and lines", async () => {
-    const originalEntry = (await createEntry(balancedLines)).body;
+    const originalEntry = (await createEntry(balancedLines)).body.data;
 
     await expect(
       db.$executeRaw`

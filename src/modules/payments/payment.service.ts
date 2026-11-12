@@ -53,8 +53,8 @@ export async function createPayment(
 
   try {
     return await db.$transaction(async (tx) => {
-      // Idempotency gate. A concurrent request with the same key blocks here on the unique index until
-      // the first transaction commits
+      // The unique index on the keys blocks concurrent requests
+      // until the first one commits
       const inserted = await tx.$queryRaw<{ key: string }[]>`
         INSERT INTO idempotency_keys (key, request_hash) VALUES (${idemKey}, ${hash})
         ON CONFLICT (key) DO NOTHING RETURNING key`;
@@ -84,6 +84,7 @@ export async function createPayment(
         where: { loanId },
         _max: { seq: true },
       });
+
       const payment = await tx.payment.create({
         data: {
           loanId,
@@ -156,7 +157,7 @@ export async function reversePayment(
     const adjustments = await reallocate(tx, loanId, {
       triggerPaymentId: paymentId,
       kind: "REVERSED",
-      entryDate: input.date ?? today(), // corrections always land in an open period
+      entryDate: input.date ?? today(),
       reason: `Payment ${paymentId} reversed: ${input.reason}`,
     });
     return plain({ payment: await paymentView(tx, paymentId), adjustments });

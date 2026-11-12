@@ -29,12 +29,13 @@ describe("POST /jobs/accrue", () => {
     );
 
     const repeatedAccrualResponse = await api().post(
-      `/jobs/accrue?asOf=${DATES.instalment2}`,
+      `/jobs/accrue?asOfDate=${DATES.instalment2}`,
     );
+
     expect(repeatedAccrualResponse.body.data.instalmentsAccrued).toBe(0); // idempotent
 
     const subsequentAccrualResponse = await api().post(
-      `/jobs/accrue?asOf=${DATES.instalment3}`,
+      `/jobs/accrue?asOfDate=${DATES.instalment3}`,
     );
     expect(subsequentAccrualResponse.body.data.instalmentsAccrued).toBe(1);
   });

@@ -33,7 +33,7 @@ export async function createExampleLoan(
   if (response.status !== 201)
     throw new Error(`loan create failed: ${JSON.stringify(response.body)}`);
 
-  return response.body as {
+  return response.body.data as {
     id: string;
     instalmentAmount: number;
     totalInterest: number;
@@ -53,8 +53,12 @@ export const pay = (
     .set("Idempotency-Key", idempotencyKey)
     .send({ amount, paymentDate, ...additionalFields });
 
-export const getNetBalance = (trialBalance: any, accountCode: string): number =>
-  Number(
-    trialBalance.accounts.find((account: any) => account.code === accountCode)
-      .net,
+export const getNetBalance = (
+  trialBalance: any,
+  accountCode: string,
+): number => {
+  let found = trialBalance.accounts.find(
+    (account: any) => account.code === accountCode,
   );
+  return Number(found.netBalance);
+};

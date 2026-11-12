@@ -13,8 +13,8 @@ loanRouter.get("/:id/audit", async (req, res) => {
     where: { loanId },
     orderBy: { createdAt: "asc" },
   });
-  res.json(
-    rows.map((r) => ({
+  res.json({
+    data: rows.map((r) => ({
       at: r.createdAt,
       paymentId: r.paymentId,
       triggeredBy: r.triggerPaymentId,
@@ -24,7 +24,7 @@ loanRouter.get("/:id/audit", async (req, res) => {
       after: r.after,
       journalEntryId: r.journalEntryId,
     })),
-  );
+  });
 });
 
 loanRouter.post("/", async (req, res) => {

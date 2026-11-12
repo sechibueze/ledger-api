@@ -66,7 +66,7 @@ ledgerRouter.post("/entries/:id/reverse", async (req, res) => {
         date: body.date,
       },
     );
-    return res.status(201).json({ data: original });
+    return res.status(201).json({ data: reversedPayment });
   }
   const reversal = await reverseEntry(id, body);
   res.status(201).json({
